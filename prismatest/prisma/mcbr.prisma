@@ -1,0 +1,102 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "cockroachdb"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id             String   @id(map: "primary") @default(uuid()) @db.Uuid
+    createdAt      DateTime @default(now())
+    username       String
+    hashedPassword String
+    fullName       String
+    dplink         String   @default("https://w7.pngwing.com/pngs/973/860/png-transparent-anonym-avatar-default-head-person-unknown-user-user-pictures-icon-thumbnail.png")
+    coverlink      String   @default("https://images.pexels.com/photos/7130475/pexels-photo-7130475.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2")
+    biolink        String?
+    location       String?
+    description    String?
+
+    //-----------[ Following Relation ]--------------
+    followers    User_Follows[] @relation("following")
+    following    User_Follows[] @relation("follower")
+    //-----------[ Posts Relation ]------------
+    createdPosts User_Posts[]   @relation("author")
+}
+
+model GenericPost {
+    id        String    @id(map: "primary") @default(uuid()) @db.Uuid
+    createdAt DateTime  @default(now())
+    editedAt  DateTime?
+    postType  String
+
+    //Child posts
+    microblog Microblog?
+    blog      Blog?
+    poll      Poll?
+
+    //Other relations
+    authors User_Posts[] @relation("post")
+
+    //----------------- [Replies] --------------------
+    replies      GenericPost[] @relation("replies")
+    parent       GenericPost?  @relation("replies", fields: [parentPostId], references: [id])
+    parentPostId String?       @db.Uuid
+}
+
+// ============= Individual Post Schemas ==============
+
+model Microblog {
+    id          String  @id(map: "primary") @default(uuid()) @db.Uuid
+    textcontent String
+    medialink   String?
+    mediaformat String?
+
+    //Ownership
+    parent   GenericPost @relation(fields: [parentId], references: [id])
+    parentId String      @unique @db.Uuid
+}
+
+model Blog {
+    id        String @id(map: "primary") @default(uuid()) @db.Uuid
+    title     String
+    coverlink String @default("")
+    content   Json
+
+    //Ownership
+    parent   GenericPost @relation(fields: [parentId], references: [id])
+    parentId String      @unique @db.Uuid
+}
+
+model Poll {
+    id        String @id(map: "primary") @default(uuid()) @db.Uuid
+    title     String
+    coverlink String @default("")
+    options   Json
+
+    //Ownership
+    parent   GenericPost @relation(fields: [parentId], references: [id])
+    parentId String      @unique @db.Uuid
+}
+
+//==================== [ Associations ] ======================
+
+model User_Follows {
+    follower    User   @relation("follower", fields: [followerId], references: [id])
+    followerId  String @db.Uuid
+    following   User   @relation("following", fields: [followingId], references: [id])
+    followingId String @db.Uuid
+
+    @@id([followerId, followingId])
+}
+
+model User_Posts {
+    author   User        @relation("author", fields: [authorId], references: [id])
+    authorId String      @db.Uuid
+    post     GenericPost @relation("post", fields: [postId], references: [id])
+    postId   String      @db.Uuid
+
+    @@id([authorId, postId])
+}

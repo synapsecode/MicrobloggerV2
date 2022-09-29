@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "cockroachdb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String @id(map: "primary") @default(uuid()) @db.Uuid
+  age            Int
+  name           String
+  email          String
+  role           Role?
+  writtenPosts   Post[] @relation("WrittenPosts")
+  favouritePosts Post[] @relation("FavouritePosts")
+
+  //One to One
+  userPreference   UserPreference? @relation(fields: [userPreferenceId], references: [id])
+  userPreferenceId String          @unique @db.Uuid
+  //@@id([a,b]) //Composite Attributes
+
+  //Block Level Attribute
+  @@unique([age, name])
+  @@index([email]) //helps in querying
+}
+
+model Post {
+  id             String     @id(map: "primary") @default(uuid()) @db.Uuid
+  rating         Decimal
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  //One to Many
+  author         User       @relation("WrittenPosts", fields: [authorId], references: [id])
+  authorId       String     @db.Uuid
+  favouritedBy   User?      @relation("FavouritePosts", fields: [favouritedById], references: [id])
+  favouritedById String?    @db.Uuid
+  //Many to Many
+  categories     Category[]
+}
+
+model Category {
+  id    String @id(map: "primary") @default(uuid()) @db.Uuid
+  name  String @unique
+  posts Post[]
+}
+
+model UserPreference {
+  id           String  @id(map: "primary") @default(uuid()) @db.Uuid
+  emailUpdates Boolean
+  user         User?
+}
+
+enum Role {
+  BASIC
+  ADMIN
+}

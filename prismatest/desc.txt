@@ -1,0 +1,29 @@
+Initializing
+    npm init
+    npm i --save-dev prisma typescript ts-node @types/node nodemon
+    create tsconfig.json add add rules
+    npx prisma init --datasource-provider postgresql
+    edit .env file and add cockroachdb connection string
+    use (npx prisma migrate dev --name init) to apply changes after editing schema
+    npx prisma generate & copy code
+
+
+
+
+
+
+
+Stuff
+    1. you can only have one datasource
+    2. Field Types:
+        1. Int, String, Boolean, BigInt, Float, Decimal, Json, Bytes, <Model> Type (autocreates for you)
+    3. Attributes
+        1. @unique, @relationship
+
+
+
+
+Relationships:
+1. OTO
+2. MTM
+3. OTM
